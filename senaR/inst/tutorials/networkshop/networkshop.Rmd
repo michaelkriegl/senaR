@@ -1,0 +1,445 @@
+---
+title: "Net-Workshop"
+output: 
+  learnr::tutorial:
+    theme: "flatly"
+runtime: shiny_prerendered
+description: "Getting personal with networks!"
+
+# use ctrl+shift+k to render
+# based on this https://rstudio.github.io/learnr/ OR # I could also use this here? --> R Notebooks based on R Markdown https://bookdown.org/yihui/rmarkdown/notebook.html
+# USE RCLOUD https://rstudio.cloud/plans/free
+# https://education.rstudio.com/blog/2020/05/learnr-for-remote/
+# After finishing: Post your code here: https://app.netlify.com/drop
+# Schloerke, Barret, JJ Allaire, and Barbara Borges. 2020. Learnr: Interactive Tutorials for r. 
+#library(knitr)
+#library(rmarkdown)
+#library(learnr)
+
+
+#https://github.com/rstudio/leasdrnr/issues/99
+#https://pkgs.rstudio.com/learnr/articles/exercises.html
+
+# ```{r test}
+# a <- d+4
+# ``` 
+# 
+# ```{r test2, exercise=TRUE, exercise.setup = "test", error=FALSE}
+# b <- a + d
+# ``` 
+
+---
+
+<!-- Background setup + creating datafile to work with -->
+
+
+```{r setup, include=FALSE}
+library(learnr) # tutorial mode
+library(tidyverse) # housekeeping
+library(igraph) # networks tools
+library(ggraph) # network plotting
+
+knitr::opts_chunk$set(echo = FALSE)
+
+egoID <- c(22,22,22,22,22,22,22,22,22,22,22,22,22)
+#alterID <- c(1,2,3,4,5,6,7,8,9,10,11,12,13)
+alter <- c("Concha de Abanico", "Perico", "Pez espada", "Pota", "Caracol negro", "Lenguado", "IMARPE", "Martin", "Armador", "SANIPES", "DICAPI", "NGO", "Maria")
+identity <- c("ecological","ecological","ecological","ecological","ecological","ecological","social","social","social","social","social","social","social")
+frequency <- c(NA,NA,NA,NA,NA,NA,"monthly","daily","weekly","monthly","weekly","yearly","daily")
+frequency_code <- c(NA,NA,NA,NA,NA,NA,3,5,4,3,4,2,5)
+importance <- c("essential","important","important","essential","important","not_important",NA,NA,NA,NA,NA,NA,NA)
+importance_code <- c(3,2,2,3,2,1,NA,NA,NA,NA,NA,NA,NA)
+df <- data.frame(egoID,alter,identity,frequency,frequency_code,importance,importance_code)
+
+nodes <- c("22","Concha de Abanico", "Perico", "Pez espada", "Pota", "Caracol negro", "Lenguado", "IMARPE", "Martin", "Armador", "SANIPES", "DICAPI", "NGO", "Maria")
+identity <- c("ego","ecological","ecological","ecological","ecological","ecological","ecological","social","social","social","social","social","social","social")
+
+nodes <- data.frame(nodes, identity)
+
+g <- graph_from_data_frame(df, directed=T,vertices=nodes)
+
+```
+
+## Goals
+
+* Understanding the building blocks of networks
+* Handling network data
+* Creating beautiful network plots
+* Where can I learn more?
+
+<img style="padding:0.7em; margin-left:2.5em;" src="images/Social-ecological dodecahedron_3D.png" width="215"/>
+
+
+## R basics
+
+### Getting started
+
+Let's refresh our R skills by going through some examples. 
+
+
+
+Run the R code below to add 2 plus 2. First press "Run Code". You can change the code, e.g. to calculate 3+3. Do that now and check the result. 
+
+If you want to go back to the initial state, simply press "Start Over".
+
+```{r 1-1, exercise=TRUE}
+2+2
+```
+
+Now run the R code below to store 4 in "a" and 2 in "b". Then calculate a+b. 
+
+Now try including a*b and check the outcome!
+
+```{r 1-2, exercise=TRUE}
+a <- 4
+
+b <- 2
+
+a + b
+
+```
+
+To create a vector (i.e. a list of numbers), we can use the c() command, referring to "concatenate" or "put together".
+
+```{r 1-3, exercise=TRUE}
+
+c(1,2,3,4,5,6)
+
+```
+
+We can also simply write 1:6, equally creating a list of numbers from 1 to 6.
+
+```{r 1-4, exercise=TRUE}
+
+1:6
+
+```
+
+
+
+
+Just as before, we can store this in a variable, such as "c". To view the variable, simply type in c in the console. In case you get stuck, use the Hint button.
+
+```{r 1-5, exercise=TRUE}
+
+c <- 1:6
+
+```
+
+```{r 1-5-hint}
+
+# Simply type in "c" in the console to inspect the list.
+
+```
+
+We can then use some of R's built-in functions to calculate the mean, minimum and length of the list of numbers.
+
+```{r 1-6, exercise=T}
+
+c <- 1:6
+
+mean(c) # calculates the mean
+min(c) # minimum value in a list
+length(c) # length of a list
+
+```
+
+Easy, right? We now want to create a matrix and inspect it. Note that we store the matrix in a variable called "adj". Can we use this to view the matrix?
+
+We can then check how many rows and columns the matrix has using the ncol() and nrow() commands.
+
+```{r 1-7, exercise=TRUE}
+
+adj <- matrix(c(0,1,0, 1,0,0, 1,1,0), nrow=3, ncol=3)
+
+ncol(adj)
+nrow(adj)
+
+```
+
+```{r 1-7-hint}
+
+#Add adj to the code to inspect the matrix.
+
+```
+
+#### Exercise
+
+Now it's your turn. Please 1) create a vector that runs from 1 to 25, 2) save it as "d" and 3) calculate its mean.
+
+```{r 1-8, exercise=TRUE, exercise.lines = 5}
+
+```
+
+
+## Working with a dataset
+
+Usually we do not create matrices / data frames by hand (as with the matrix example above), but instead import data from external files, e.g. from csv files.
+
+To load a dataset, you can use the command read_csv and insert the location on your computer. For this exercise, this has already been done for you. To view the dataset, simply type in the name of the dataset "df".
+
+```{r 2-1, exercise=TRUE, exercise.lines = 5}
+# df <- read_csv("data/alter_list.csv") 
+# --> already done for you!
+
+
+
+```
+
+```{r 2-1-hint}
+
+# Simply type in "df". Your code then looks like this:
+
+df
+
+```
+
+After having inspected the dataset a bit, let's only view the alters. For this we can use the $ command, which is used in R to specify a specific column.
+
+```{r 2-2, exercise=TRUE}
+
+df$alter
+
+```
+
+We now want to subset the data, only keeping the ecological nodes. For this we can use the squared brakets [] to subset and "==", meaning "is equal to", to indicate a subsetting condition. 
+
+PS: Don't worry! As we do not overwrite the df, we don't lose the rest of the dataset.
+
+```{r 2-3, exercise=TRUE}
+
+df[identity=="ecological",]
+
+```
+
+Now, let's subset based on social alters. However, we only want to keep those social alters with daily interactions. Note how we can use the & sign for this. 
+
+```{r 2-4, exercise=TRUE}
+
+df[identity=="social"&frequency=="daily",]
+
+```
+
+Let's try subsetting the dataset for non-ecological actors (i.e. social). For this we can use the comparison operator "!=", meaning "is different from". 
+
+In this simple case, we could also write =="social".
+
+```{r 2-5, exercise=TRUE}
+
+df[identity!="ecological",]
+
+```
+
+### Exercises:
+
+With which social actors does ID22 interact on a monthly basis? For this exercuse, you can refer to the code above.
+
+```{r 2-6, exercise=TRUE, exercise.lines = 5}
+
+```
+
+```{r 2-6-hint}
+df[identity=="social"&frequency=="monthly",]
+```
+
+How many of the target species are "essential" for ID22?
+
+```{r 2-7, exercise=TRUE, exercise.lines = 5}
+
+```
+
+```{r 2-7-hint}
+# Besides simply inspecting this admittedly small dataset and counting, you can also use ncol() to calculate the number of columns in a (subsetted) dataframe.
+```
+
+
+## Visualizing networks
+
+After revisiting some basic R knowledge, let's focus on using R for network analysis. Let's start by using a single personal network.
+
+But, what was a personal network again?
+
+```{r quiz}
+quiz(
+  question("A personal network consists of ...",
+    answer("ego = the focal individual", correct = TRUE),
+    answer("alters = nodes to whom the ego is connected", correct = TRUE),
+    answer("ties = the links between ego and alters", correct = TRUE)),
+  question("A personal network maps the connections ...",
+    answer("of an entire community, such as a fishing village"),
+    answer("from the perspective of an individual, e.g. a fisher", correct = TRUE)))
+```
+
+There are different R packages for working with network data. A very versatile package is called "igraph". To use "igraph", we first have to transform our dataframe into an igraph object. 
+
+The code below does exactly this. Before running it, add the code snippet necessary to inspect it afterwards. You are already an R pro, so you probably don't need a hint.
+
+What does this output tell us? Let's discuss together.
+
+```{r 3-1, exercise=TRUE}
+
+g <- graph_from_data_frame(df, directed=F)
+
+```
+
+?graph_from_data_frame
+
+```{r 3-1-hint}
+#Simply type in "g" or alternatively "print(g)" and run the code.
+
+# The graph is Undirected, Named. It has 14 vertices and 13 edges. It
+# has a vertex attribute called "name" and edge attributes called "identity","frequency" and "importance".
+
+```
+
+To plot an igraph object, we can use the "ggraph" package. Now, run the code below.
+
+```{r 3-3, exercise=TRUE, exercise.lines = 7}
+
+ggraph(g, layout="stress") +
+geom_edge_link() + # Draw edges
+geom_node_point(size=5, color="blue") + # Draw nodes
+theme_graph(base_family = 'Helvetica') # Set graph theme and font
+
+```
+
+Congratulations, you just plotted your first network!
+
+## Network Visualization II
+
+Let's up our game! 
+
+We now want to color the nodes based on their "identity".
+
+We thus modify the code as outlined below. Do you see the difference?
+
+```{r 4-1, exercise=TRUE, exercise.lines = 7,warning=FALSE}
+
+ggraph(g, layout="stress") + 
+geom_edge_link() + # Draw edges / ties
+geom_node_point(aes(color=identity), size=5) + # Draw nodes setting alter.res as node color and fixed node size
+theme_graph()
+
+```
+
+Adjust edge width based on importance of target species and frequency of interaction with alters.
+
+```{r 4-2, exercise=TRUE, exercise.lines = 7,warning=FALSE}
+
+ggraph(g, layout="stress") +
+geom_edge_link(aes(width=importance_code)) + # Draw edges and set size based on importance
+geom_edge_link(aes(width=frequency_code)) +
+geom_node_point(aes(color=identity), size=5) +
+theme_graph()
+```
+
+In a last step, we add the ID label.
+
+```{r 4-3, exercise=TRUE, exercise.lines = 7,warning=FALSE}
+
+ggraph(g, layout="stress") +
+geom_edge_link() + # Draw edges and set size based on importance
+geom_node_label(aes(color=identity,label= name)) +
+theme_graph()
+
+```
+
+
+### Going into the data
+
+```{r 4-4, exercise=TRUE}
+
+V(g)
+E(g)
+
+```
+
+Calculate node- and edge-level characteristics: mean frequency and general network characteristics (degree centrality)!
+
+```{r 4-5, exercise=TRUE}
+
+E(g)$frequency
+V(g)[identity=="social"]$names
+
+```
+
+```{r 4-6, exercise=TRUE}
+
+mean_frequency <- mean(E(g)[identity=="social"]$frequency,na.rm=TRUE)
+mean_frequency
+
+dc <- length(V(g)) # calculating degree centrality
+dc
+
+E(g)[importance==3]
+
+```
+
+If you want to learn how to import data from network canvas yourselves, then check out this video: https://www.youtube.com/watch?v=4XAQGuu7KWc
+
+Include the visualization from this video!!!!
+https://www.youtube.com/watch?v=4XAQGuu7KWc
+
+summary() <- min, max, network size!
+
+
+---------------------------
+
+
+CONTINUE ON PAGE 54!
+
+Exercise
+
+Get the average alter closeness (vertex attribute $alter.clo) of Sri Lankan
+alters in the personal network gr. Use mean().
+
+How many edges in the personal network gr involve at least one close family 
+member and are "probable"? Remember that "probable" edges (the two alters 
+"maybe" know each other) have $weight==2 and close family members have
+$relation=="Close family". Use inc().
+
+
+
+## Mapping in R
+
+Creating a map
+
+Plotting a network on top.
+
+
+
+## Wrap-Up
+
+Well done! You are already a network-professional :)
+
+As a starting point, check out these two publications to learn more:
+
+
+* Kluger, L. C., Gorris, P., Kochalski, S., Mueller, M. S., & Romagnoni, G. (2020). Studying human–nature relationships through a network lens: A systematic review. People and Nature, 2(4), 1100-1116.
+
+https://besjournals.onlinelibrary.wiley.com/doi/full/10.1002/pan3.10136
+
+
+* Felipe-Lucia, M. R., Guerrero, A. M., Alexander, S. M., Ashander, J., Baggio, J. A., Barnes, M. L., ... & Dee, L. E. (2021). Conceptualizing ecosystem services using social–ecological networks. Trends in ecology & evolution.
+
+https://www.sciencedirect.com/science/article/pii/S0169534721003177
+
+
+### Creating the output
+
+rmarkdown::run("networkshop.Rmd")
+
+
+<!-- Additional code not used above
+
+#```{r 3-2-hint}
+#Try re-running the code multiple times. 
+#Notice how the visualization changes a little bit each time. 
+#In order to keep the visualization constant, do the following:
+#Set a so-called "seed" by adding "set.seed(123)" before the plotting argument 
+#This ensures that each time you plot your network, it looks the same.
+
+#PS:(123 can be substituted by any number of your choice)
+#```
+
+-->
