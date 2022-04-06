@@ -1,7 +1,7 @@
 Package: senaR
 Title: Social-ecological network analysis in R
 Version: 0.0.0.9000
-Authors@R: MichaelKriegl
+Authors@R:
     person("Michael", "Kriegl", , "michael.kriegl@outlook.com", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
 Description: This tutorial gives an introduction and overview of social-ecological network analysis in R.
