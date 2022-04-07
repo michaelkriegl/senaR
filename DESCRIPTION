@@ -17,6 +17,7 @@ Imports:
     ggraph,
     igraph,
     learnr,
+    maps,
     purrr,
     readr,
     stringr,
