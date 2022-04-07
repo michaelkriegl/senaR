@@ -1,5 +1,5 @@
 ---
-title: "Net-Workshop"
+title: "Social-ecological network analysis"
 output: 
   learnr::tutorial:
     theme: "flatly"
@@ -7,26 +7,8 @@ runtime: shiny_prerendered
 description: "Getting personal with networks!"
 
 # use ctrl+shift+k to render
-# based on this https://rstudio.github.io/learnr/ OR # I could also use this here? --> R Notebooks based on R Markdown https://bookdown.org/yihui/rmarkdown/notebook.html
-# USE RCLOUD https://rstudio.cloud/plans/free
-# https://education.rstudio.com/blog/2020/05/learnr-for-remote/
-# After finishing: Post your code here: https://app.netlify.com/drop
+# based on this https://rstudio.github.io/learnr/
 # Schloerke, Barret, JJ Allaire, and Barbara Borges. 2020. Learnr: Interactive Tutorials for r. 
-#library(knitr)
-#library(rmarkdown)
-#library(learnr)
-
-
-#https://github.com/rstudio/leasdrnr/issues/99
-#https://pkgs.rstudio.com/learnr/articles/exercises.html
-
-# ```{r test}
-# a <- d+4
-# ``` 
-# 
-# ```{r test2, exercise=TRUE, exercise.setup = "test", error=FALSE}
-# b <- a + d
-# ``` 
 
 ---
 
@@ -38,6 +20,7 @@ library(learnr) # tutorial mode
 library(tidyverse) # housekeeping
 library(igraph) # networks tools
 library(ggraph) # network plotting
+library(maps) # mapping
 
 knitr::opts_chunk$set(echo = FALSE)
 
@@ -58,6 +41,18 @@ nodes <- data.frame(nodes, identity)
 
 g <- graph_from_data_frame(df, directed=T,vertices=nodes)
 
+
+location <- c("paris","villefranche","banyuls","roscoff")
+lat <- c(48.8566,43.7040,42.4834,48.7262)
+long <- c(2.3522,7.3111,3.1289,-3.9853)
+days <- c(12,45,35,21)
+places <- data.frame(location,lat,long,days)
+
+lat_2 <- c(48.8566,43.7040,42.4834,48.8566,48.7262)
+long_2 <- c(2.3522,7.3111,3.1289,2.3522,-3.9853)
+travel <- data.frame(lat_2,long_2)
+
+
 ```
 
 ## Goals
@@ -65,6 +60,7 @@ g <- graph_from_data_frame(df, directed=T,vertices=nodes)
 * Understanding the building blocks of networks
 * Handling network data
 * Creating beautiful network plots
+* Network data with associated coordinates
 * Where can I learn more?
 
 <img style="padding:0.7em; margin-left:2.5em;" src="images/Social-ecological dodecahedron_3D.png" width="215"/>
@@ -115,9 +111,6 @@ We can also simply write 1:6, equally creating a list of numbers from 1 to 6.
 
 ```
 
-
-
-
 Just as before, we can store this in a variable, such as "c". To view the variable, simply type in c in the console. In case you get stuck, use the Hint button.
 
 ```{r 1-5, exercise=TRUE}
@@ -128,7 +121,7 @@ c <- 1:6
 
 ```{r 1-5-hint}
 
-# Simply type in "c" in the console to inspect the list.
+# Simply type "c" in the console to inspect the list.
 
 ```
 
@@ -148,7 +141,7 @@ Easy, right? We now want to create a matrix and inspect it. Note that we store t
 
 We can then check how many rows and columns the matrix has using the ncol() and nrow() commands.
 
-```{r 1-7, exercise=TRUE}
+```{r 1-7, exercise=TRUE, exercise.lines = 6}
 
 adj <- matrix(c(0,1,0, 1,0,0, 1,1,0), nrow=3, ncol=3)
 
@@ -174,9 +167,9 @@ Now it's your turn. Please 1) create a vector that runs from 1 to 25, 2) save it
 
 ## Working with a dataset
 
-Usually we do not create matrices / data frames by hand (as with the matrix example above), but instead import data from external files, e.g. from csv files.
+Usually we do not create matrices / data frames by hand (as with the previous matrix example), but instead import data from external files, e.g. from csv files.
 
-To load a dataset, you can use the command read_csv and insert the location on your computer. For this exercise, this has already been done for you. To view the dataset, simply type in the name of the dataset "df".
+To load a dataset, you can use the command read_csv and direct it towards the file location on your computer. For this exercise, this has already been done for you. To view the dataset, simply type in the name of the dataset "df".
 
 ```{r 2-1, exercise=TRUE, exercise.lines = 5}
 # df <- read_csv("data/alter_list.csv") 
@@ -202,7 +195,7 @@ df$alter
 
 ```
 
-We now want to subset the data, only keeping the ecological nodes. For this we can use the squared brakets [] to subset and "==", meaning "is equal to", to indicate a subsetting condition. 
+We now want to subset the data, only keeping the ecological nodes. For this we can use the squared brackets [] to subset and "==", meaning "is equal to", to indicate a subsetting condition. 
 
 PS: Don't worry! As we do not overwrite the df, we don't lose the rest of the dataset.
 
@@ -222,7 +215,7 @@ df[identity=="social"&frequency=="daily",]
 
 Let's try subsetting the dataset for non-ecological actors (i.e. social). For this we can use the comparison operator "!=", meaning "is different from". 
 
-In this simple case, we could also write =="social".
+In this simple case, we could also write =="social" as we do not have any other categories in the dataset.
 
 ```{r 2-5, exercise=TRUE}
 
@@ -232,7 +225,7 @@ df[identity!="ecological",]
 
 ### Exercises:
 
-With which social actors does ID22 interact on a monthly basis? For this exercuse, you can refer to the code above.
+With which social actors does ID22 interact on a monthly basis? For this exercise, you can refer to the code above.
 
 ```{r 2-6, exercise=TRUE, exercise.lines = 5}
 
@@ -266,7 +259,7 @@ quiz(
     answer("alters = nodes to whom the ego is connected", correct = TRUE),
     answer("ties = the links between ego and alters", correct = TRUE)),
   question("A personal network maps the connections ...",
-    answer("of an entire community, such as a fishing village"),
+    answer("within a community, such as a fishing village"),
     answer("from the perspective of an individual, e.g. a fisher", correct = TRUE)))
 ```
 
@@ -282,13 +275,26 @@ g <- graph_from_data_frame(df, directed=F)
 
 ```
 
-?graph_from_data_frame
-
 ```{r 3-1-hint}
 #Simply type in "g" or alternatively "print(g)" and run the code.
 
-# The graph is Undirected, Named. It has 14 vertices and 13 edges. It
-# has a vertex attribute called "name" and edge attributes called "identity","frequency" and "importance".
+# The graph is (U)ndirected and (N)amed. It has 14 vertices and 13 edges. It has a vertex attribute (v/c for vertex/character) called "name" and edge attributes (e/c and e/n for edge/character and edge/numberic) called "identity","frequency" and "importance".
+
+```
+
+So you see that there is already quite some information hidden in the igraph object.
+
+To use "functions" such as the one above (graph_from_data_frame), the corresponding package has to be installed and loaded first. This can be done using R's built-in functions install.packages("insert_package_name") to install and library(insert_package_name) to load the packages. In this learning environment, this has already been done for you in the background. For reference, you can take a look at the respective code here:
+
+```{r 3-2, exercise=TRUE}
+#install.packages("tidyverse")
+#library(tidyverse) # housekeeping
+
+#install.packages("igraph")
+#library(igraph) # networks tools
+
+#install.packages("ggraph")
+#library(ggraph) # network plotting
 
 ```
 
@@ -299,7 +305,7 @@ To plot an igraph object, we can use the "ggraph" package. Now, run the code bel
 ggraph(g, layout="stress") +
 geom_edge_link() + # Draw edges
 geom_node_point(size=5, color="blue") + # Draw nodes
-theme_graph(base_family = 'Helvetica') # Set graph theme and font
+theme_graph() # Set graph theme
 
 ```
 
@@ -311,18 +317,26 @@ Let's up our game!
 
 We now want to color the nodes based on their "identity".
 
-We thus modify the code as outlined below. Do you see the difference?
+We thus modify the code as outlined below. Do you notice the difference?
 
 ```{r 4-1, exercise=TRUE, exercise.lines = 7,warning=FALSE}
 
 ggraph(g, layout="stress") + 
 geom_edge_link() + # Draw edges / ties
-geom_node_point(aes(color=identity), size=5) + # Draw nodes setting alter.res as node color and fixed node size
+geom_node_point(aes(color=identity), size=5) + # Draw nodes setting identity as node color with a fixed node size
 theme_graph()
 
 ```
 
-Adjust edge width based on importance of target species and frequency of interaction with alters.
+
+```{r 4-1-hint}
+# You can try the layout "lgl" (=large graph layouts) to visualize large networks while avoiding hairballs. Not really necessary here, but looks nice :)
+
+```
+
+Let's try to increase the node size. Any ideas on how to do that?
+
+We now want to adjust edge width based on 1) the indicated importance of target species and 2) frequency of interaction with social alters.
 
 ```{r 4-2, exercise=TRUE, exercise.lines = 7,warning=FALSE}
 
@@ -344,75 +358,82 @@ theme_graph()
 
 ```
 
+## Network data inspection
 
-### Going into the data
+To take a look at the node and edge data of our network, we can use V() and E(). V stands for vertices (or nodes) and E stands for edges (or links). Let's inspect both for our network g.
 
-```{r 4-4, exercise=TRUE}
+```{r 4-5, exercise=TRUE}
 
 V(g)
 E(g)
 
 ```
 
-Calculate node- and edge-level characteristics: mean frequency and general network characteristics (degree centrality)!
-
-```{r 4-5, exercise=TRUE}
-
-E(g)$frequency
-V(g)[identity=="social"]$names
-
-```
+We can use these to calculate node-level as well as edge-level characteristics of our network. For example, general network characteristics such as the degree centrality, or the mean frequency of a interactions.
 
 ```{r 4-6, exercise=TRUE}
 
-mean_frequency <- mean(E(g)[identity=="social"]$frequency,na.rm=TRUE)
-mean_frequency
-
-dc <- length(V(g)) # calculating degree centrality
-dc
-
-E(g)[importance==3]
+E(g)$frequency
+E(g)$frequency_code
 
 ```
 
-If you want to learn how to import data from network canvas yourselves, then check out this video: https://www.youtube.com/watch?v=4XAQGuu7KWc
+```{r 4-7, exercise=TRUE, exercise.lines = 7}
 
-Include the visualization from this video!!!!
-https://www.youtube.com/watch?v=4XAQGuu7KWc
+mean_frequency <- mean(E(g)[identity=="social"]$frequency_code)
 
-summary() <- min, max, network size!
+length(V(g)[identity=="social"])
+length(V(g)[identity=="ecological"])
 
-
----------------------------
-
-
-CONTINUE ON PAGE 54!
-
-Exercise
-
-Get the average alter closeness (vertex attribute $alter.clo) of Sri Lankan
-alters in the personal network gr. Use mean().
-
-How many edges in the personal network gr involve at least one close family 
-member and are "probable"? Remember that "probable" edges (the two alters 
-"maybe" know each other) have $weight==2 and close family members have
-$relation=="Close family". Use inc().
-
+```
 
 
 ## Mapping in R
 
-Creating a map
+Is there still enough time? If yes, then let's try something else. Using the "map" package, we can easily create country maps. (Another good option is the "rnaturalearth" package)
 
-Plotting a network on top.
+```{r 5-1, exercise=TRUE, exercise.lines = 7}
 
+# library(maps) <- Already done for you!
 
+map("france",col="grey70",fill=TRUE)
+
+```
+
+We can plot locations on the map.
+
+```{r 5-1, exercise=TRUE, exercise.lines = 7}
+
+# library(maps) <- Already done for you!
+
+places
+
+map("france",col="grey70",fill=TRUE)
+points(x=places$long, y=places$lat, pch=21,
+       cex=2, col="black",bg="orange")
+
+```
+
+And indicate the travel routes / connections between these places. We can also scale the size of the circles according to e.g. the amount of time spent in each place.
+
+```{r 5-2, exercise=TRUE, exercise.lines = 7}
+
+map("france",col="grey70",fill=TRUE)
+lines(travel$long,travel$lat, col="#762a83",lwd=5)
+points(x=places$long, y=places$lat, pch=21,
+       cex=places$days/10, col="black",bg="orange")
+
+```
+
+Wonderful, we did it! :)
 
 ## Wrap-Up
 
-Well done! You are already a network-professional :)
+Well done! You are already network-professionals :) I am sure can't wait to start your own network study! Here are some helpful resources for this:
 
-As a starting point, check out these two publications to learn more:
+<img style="padding:0.7em; margin-left:2.5em;" src="images/Social-ecological dodecahedron_3D.png" width="215"/>
+
+To learn more about social-ecological networks, check out these two fantastic publications:
 
 
 * Kluger, L. C., Gorris, P., Kochalski, S., Mueller, M. S., & Romagnoni, G. (2020). Studying human–nature relationships through a network lens: A systematic review. People and Nature, 2(4), 1100-1116.
@@ -424,22 +445,17 @@ https://besjournals.onlinelibrary.wiley.com/doi/full/10.1002/pan3.10136
 
 https://www.sciencedirect.com/science/article/pii/S0169534721003177
 
+------------------------
 
-### Creating the output
+Check out this webpage if you want to dive into network visualization: https://kateto.net/network-visualization
 
-rmarkdown::run("networkshop.Rmd")
+If you want to learn how to import data from network canvas yourselves, then check out this video: 
+![](https://www.youtube.com/watch?v=4XAQGuu7KWc)
 
 
-<!-- Additional code not used above
+----------------------
 
-#```{r 3-2-hint}
-#Try re-running the code multiple times. 
-#Notice how the visualization changes a little bit each time. 
-#In order to keep the visualization constant, do the following:
-#Set a so-called "seed" by adding "set.seed(123)" before the plotting argument 
-#This ensures that each time you plot your network, it looks the same.
+Code needed to create an output on your computer:
 
-#PS:(123 can be substituted by any number of your choice)
-#```
+rmarkdown::run("introduction.Rmd")
 
--->
