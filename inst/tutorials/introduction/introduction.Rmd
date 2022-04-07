@@ -11,6 +11,16 @@ description: "Getting personal with networks!"
 # Schloerke, Barret, JJ Allaire, and Barbara Borges. 2020. Learnr: Interactive Tutorials for r. 
 # use this to include some package in my own package usethis::use_package("maps"). https://education.rstudio.com/blog/2020/09/delivering-learnr-tutorials-in-a-package/
 
+# Code to get started
+
+#install.packages("devtools")
+#install.packages("learnr")
+#library(devtools)
+#library(learnr)
+
+#devtools::install_github("michaelkriegl/senaR"
+#learnr::run_tutorial("introduction", package = "senaR")
+
 ---
 
 <!-- Background setup + creating datafile to work with -->
@@ -403,7 +413,7 @@ map("france",col="grey70",fill=TRUE)
 
 We can plot locations on the map.
 
-```{r 5-1, exercise=TRUE, exercise.lines = 7}
+```{r 5-2, exercise=TRUE, exercise.lines = 7}
 
 # library(maps) <- Already done for you!
 
@@ -417,7 +427,7 @@ points(x=places$long, y=places$lat, pch=21,
 
 And indicate the travel routes / connections between these places. We can also scale the size of the circles according to e.g. the amount of time spent in each place.
 
-```{r 5-2, exercise=TRUE, exercise.lines = 7}
+```{r 5-3, exercise=TRUE, exercise.lines = 7}
 
 map("france",col="grey70",fill=TRUE)
 lines(travel$long,travel$lat, col="#762a83",lwd=5)
