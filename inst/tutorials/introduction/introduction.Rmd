@@ -212,7 +212,7 @@ PS: Don't worry! As we do not overwrite the df, we don't lose the rest of the da
 
 ```{r 2-3, exercise=TRUE}
 
-df[identity=="ecological",]
+df[df$identity=="ecological",]
 
 ```
 
@@ -220,7 +220,7 @@ Now, let's subset based on social alters. However, we only want to keep those so
 
 ```{r 2-4, exercise=TRUE}
 
-df[identity=="social"&frequency=="daily",]
+df[df$identity=="social"&df$frequency=="daily",]
 
 ```
 
@@ -230,7 +230,7 @@ In this simple case, we could also write =="social" as we do not have any other 
 
 ```{r 2-5, exercise=TRUE}
 
-df[identity!="ecological",]
+df[df$identity!="ecological",]
 
 ```
 
@@ -243,7 +243,7 @@ With which social actors does ID22 interact on a monthly basis? For this exercis
 ```
 
 ```{r 2-6-hint}
-df[identity=="social"&frequency=="monthly",]
+df[df$identity=="social"&df$frequency=="monthly",]
 ```
 
 How many of the target species are "essential" for ID22?
