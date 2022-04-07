@@ -3,7 +3,7 @@ Title: Social-ecological network analysis in R
 Version: 0.0.0.9000
 Authors@R:
     person("Michael", "Kriegl", , "michael.kriegl@outlook.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           comment = c(ORCID = "0000-0003-0992-7219"))
 Description: This tutorial gives an introduction and overview of social-ecological network analysis in R.
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
